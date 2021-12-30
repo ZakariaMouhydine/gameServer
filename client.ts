@@ -17,7 +17,7 @@ async function createGame(){
     gameId=gameInfo.gameId;  //we now know which game WE have joined (the creator)
     (<HTMLInputElement>document.getElementById("gameToShare")).value=gameId.toString() 
     joinGame(gameId)
-}
+} 
 
 
 async function joinGame(gameId){
