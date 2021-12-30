@@ -1,3 +1,5 @@
+import { join } from "path/posix"
+
 let gameId:number =0
 let playerName:string=""
 const endpoint="http://localhost:5050"   //change to the correct deployed port
@@ -8,20 +10,19 @@ async function createGame(){
 
     let cmd={cmd:"createGame",playerName:playerName}
     
-    let msgs = await fetchObject(endpoint,cmd)
+    let gameInfo= await fetchObject(endpoint,cmd)
     
-    processMsgs(msgs)
+    // processMsgs(msgs)
     
-    gameId=msgs[0].gameId;  //we now know which game WE have joined (the creator)
-    (<HTMLInputElement>document.getElementById("gameToShare")).value=gameId.toString()    
-    setInterval(poll,1000)           
+    gameId=gameInfo.gameId;  //we now know which game WE have joined (the creator)
+    (<HTMLInputElement>document.getElementById("gameToShare")).value=gameId.toString() 
+    joinGame(gameId)
 }
 
-async function joinGame(){
 
-    playerName=(<HTMLInputElement>document.getElementById("playerName")).value
-    let gameToJoin=(<HTMLInputElement>document.getElementById("gameToJoin")).value
-    let payload={cmd:"joinGame",playerName:playerName,gameId:gameToJoin} //will return (assign to you)a player ID -
+async function joinGame(gameId){
+
+ let payload={cmd:"joinGame",playerName:playerName,gameId:gameId} //will return (assign to you)a player ID -
     let msgs=await fetchObject(endpoint,payload)
  
     processMsgs(msgs) //just to display them
@@ -34,7 +35,14 @@ async function joinGame(){
         console.log("Joined game")
     
         setInterval(poll,1000) //start polling for incomming data
-    }           
+    }        
+
+}
+async function joinGameHTML(){
+
+    playerName=(<HTMLInputElement>document.getElementById("playerName")).value
+    let gameToJoin=(<HTMLInputElement>document.getElementById("gameToJoin")).value
+     joinGame(gameToJoin) 
 
     //let payload={gameId:"1",playerId:"1",sqn:"-1",action:{cmd:"runTo",position:{x:100,y:100}}}
     //let payload={cmd:"createGame",myName:"Nick"} //response will include the game Id (pin), and your playerId - you will automatically join the game            
