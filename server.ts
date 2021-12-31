@@ -97,27 +97,29 @@ app.post("/*",(req,res)=>{
   
   else if (msg.cmd=="joinGame"){
     //create a new player and add them to the requested game
-    player =new Player(msg.playerName, msg.params)
-    if(msg.playerName == undefined){
-      console.log("playerName was undefined in joinGame");
-    }
-    
-    //send the game setup data (whatever that is... in our case, obstacles)
-    player.q.push({gameId:game.id,playerName:"",cmd:"gameData",sqn:game.sqn,params:game.data})
-    game.sqn++
+    if (!game.players.hasOwnProperty(msg.playerName)) {    // stop the same player name from joining twice (does not stop joining with another name)
 
-    //queue a 'virtual' 'playerJoined' message 'from' every player already in the game - for sending to this (joining) player 
-    //(so we (the joining players) get to see all the players who have *already* joined)
-    for (let pn in game.players){
-      let op=game.players[pn] //other player      
-      player.q.push({cmd:"playerJoined",playerName:op.playerName,gameId:game.id,sqn:game.sqn,params: op.params })
-      game.sqn ++ 
-    }
+      player =new Player(msg.playerName, msg.params)
+      if (msg.playerName == undefined){
+        console.log("playerName was undefined in joinGame");
+      }
+      
+      //send the game setup data (whatever that is... in our case, obstacles)
+      player.q.push({gameId:game.id,playerName:"",cmd:"gameData",sqn:game.sqn,params:game.data})
+      game.sqn++
 
-    game.players[msg.playerName]= player
-    msg.cmd="playerJoined"
-    console.log(`${msg.playerName} joined game ${game.id}`)
-    
+      //queue a 'virtual' 'playerJoined' message 'from' every player already in the game - for sending to this (joining) player 
+      //(so we (the joining players) get to see all the players who have *already* joined)
+      for (let pn in game.players){
+        let op=game.players[pn] //other player      
+        player.q.push({cmd:"playerJoined",playerName:op.playerName,gameId:game.id,sqn:game.sqn,params: op.params })
+        game.sqn ++ 
+      }
+
+      game.players[msg.playerName]= player
+      msg.cmd="playerJoined"
+      console.log(`${msg.playerName} joined game ${game.id}`)
+    }
     
   }
 
@@ -138,7 +140,7 @@ app.post("/*",(req,res)=>{
   }
   
   //the response to posting up ANY message (inclding Poll) is the list of all pending items in YOUR q (which will include the action you just posted)
-  if (game.players.hasOwnProperty(msg.playerName)){
+   if (game.players.hasOwnProperty(msg.playerName)){
     
     //note q *can* be empty if we are polling and there is nothing for us
     if (game.players[msg.playerName].q.length>0){

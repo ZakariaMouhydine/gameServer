@@ -80,23 +80,25 @@ app.post("/*", function (req, res) {
     }
     else if (msg.cmd == "joinGame") {
         //create a new player and add them to the requested game
-        player = new Player(msg.playerName, msg.params);
-        if (msg.playerName == undefined) {
-            console.log("playerName was undefined in joinGame");
-        }
-        //send the game setup data (whatever that is... in our case, obstacles)
-        player.q.push({ gameId: game.id, playerName: "", cmd: "gameData", sqn: game.sqn, params: game.data });
-        game.sqn++;
-        //queue a 'virtual' 'playerJoined' message 'from' every player already in the game - for sending to this (joining) player 
-        //(so we (the joining players) get to see all the players who have *already* joined)
-        for (var pn in game.players) {
-            var op = game.players[pn]; //other player      
-            player.q.push({ cmd: "playerJoined", playerName: op.playerName, gameId: game.id, sqn: game.sqn, params: op.params });
+        if (!game.players.hasOwnProperty(msg.playerName)) { // stop the same player name from joining twice (does not stop joining with another name)
+            player = new Player(msg.playerName, msg.params);
+            if (msg.playerName == undefined) {
+                console.log("playerName was undefined in joinGame");
+            }
+            //send the game setup data (whatever that is... in our case, obstacles)
+            player.q.push({ gameId: game.id, playerName: "", cmd: "gameData", sqn: game.sqn, params: game.data });
             game.sqn++;
+            //queue a 'virtual' 'playerJoined' message 'from' every player already in the game - for sending to this (joining) player 
+            //(so we (the joining players) get to see all the players who have *already* joined)
+            for (var pn in game.players) {
+                var op = game.players[pn]; //other player      
+                player.q.push({ cmd: "playerJoined", playerName: op.playerName, gameId: game.id, sqn: game.sqn, params: op.params });
+                game.sqn++;
+            }
+            game.players[msg.playerName] = player;
+            msg.cmd = "playerJoined";
+            console.log("".concat(msg.playerName, " joined game ").concat(game.id));
         }
-        game.players[msg.playerName] = player;
-        msg.cmd = "playerJoined";
-        console.log("".concat(msg.playerName, " joined game ").concat(game.id));
     }
     else if (msg.gameId == null) {
         console.log("ERROR: received a ".concat(msg.cmd || 'null', " command with no gameId present (Only joinGame, and createGame can be called without a gameId"));
